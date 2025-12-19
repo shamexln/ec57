@@ -158,9 +158,10 @@ def write_settings(ini_path: Path, input_dat: Path, output_csv: Path, fs: float,
         # 官方样例固定 LeadNum=2、MainLead=1、SecondLead=10（均为 0 基还是 1 基？官方文档为 0-11。
         # 按你的最新要求，严格写入如下三项：
         "LeadNum=2",
-        "MainLead=1",
-        "SecondLead=10",
+        f"MainLead={main_lead}",
+        f"SecondLead={second_lead}",
     ]
+    print(f"✅ write_settings 完成，,主导联{main_lead},副导联{second_lead}")
     ini_path.write_text("\n".join(lines), encoding='utf-8')
 
 
@@ -242,46 +243,14 @@ def main(argv: List[str]) -> int:
 
     # 1) 读取与重排
     orig_sig, orig_names, fs, _ = read_record(db_dir, record)
-    twelve, main_pos, second_pos = to_twelve_lead(orig_sig, orig_names)
+    #twelve, main_pos, second_pos = to_twelve_lead(orig_sig, orig_names)
 
     # 2) 准备输出数据并写出 trans.dat
     record_path = str((db_dir / record).as_posix())
-    #trans_dat = process_record_to_trans_dat(record_path, out_dir)
-    trans_dat = prepare_and_write_trans_dat(twelve, main_pos, second_pos, args.leadnum, record, out_dir)
 
+    # 修改下面的函数，让它返回trans_dat, main_pos, second_pos
+    trans_dat, main_pos, second_pos = process_record_to_trans_dat(record_path, out_dir)
 
-
-    # 调试转储：首 1 秒 12 导联（缩放后 int16）与前 64 字节十六进制
-    if args.debug_dump:
-        try:
-            import csv
-            preview_csv = out_dir / f"{record}_preview.csv"
-            hex_txt = out_dir / f"{record}_hex.txt"
-            # 为了调试转储，我们需要获取缩放后的数据
-            # 这里简单复用逻辑或从文件读取，但为了保持 main 简洁且调试功能完整，我们重新获取一次 scaled_full
-            if args.leadnum == 12:
-                # 重新计算一次以便调试（或者修改 prepare_and_write_trans_dat 返回数据，但这里保持原样）
-                scaled_full = np.clip(np.rint(twelve * 200.0), -32768, 32767)
-            else:
-                scaled_full = np.zeros((12, twelve.shape[1]), dtype=np.int16)
-                m_val = np.clip(np.rint(twelve[main_pos - 1, :] * 200.0), -32768, 32767)
-                s_val = np.clip(np.rint(twelve[second_pos - 1, :] * 200.0), -32768, 32767)
-                scaled_full[1, :] = m_val  # II 位置
-                scaled_full[10, :] = s_val # V5 位置
-            sec = int(fs)
-            with open(preview_csv, 'w', newline='') as f:
-                w = csv.writer(f)
-                w.writerow(TARGET_12_LEADS)
-                for i in range(min(sec, scaled_full.shape[1])):
-                    w.writerow([int(scaled_full[ch, i]) for ch in range(12)])
-            # 读取刚写出的二进制文件前 64 字节
-            with open(trans_dat, 'rb') as bf:
-                first = bf.read(64)
-            hex_str = ' '.join(f'{b:02x}' for b in first)
-            hex_txt.write_text(hex_str, encoding='utf-8')
-            print(f"📝 调试文件：{preview_csv}, {hex_txt}")
-        except Exception as e:
-            print(f"⚠ 调试转储失败：{e}")
 
     # 3) 写 settings.ini（放在 work_dir，供 ECGAlg.exe 读取）
     ini_path = work_dir / 'settings.ini'
@@ -295,7 +264,7 @@ def main(argv: List[str]) -> int:
     # 4) 运行 ECGAlg.exe
     print("▶ 运行 ECGAlg.exe ...")
     run_ecg_alg(exe_path, work_dir)
-    print(f"✅ ECGAlg.exe 完成，输出：{output_csv}")
+    print(f"✅ ECGAlg.exe 完成，输出：{output_csv},主导联{main_pos},副导联{second_pos}")
 
     # 5) 可选：转换为 WFDB 注释
     if args.to_ann:

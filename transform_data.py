@@ -18,10 +18,10 @@
 import wfdb
 import numpy as np
 from pathlib import Path
+from typing import  Tuple
 
 
-
-def process_record_to_trans_dat(record_path: str, out_dir: Path) -> Path:
+def process_record_to_trans_dat(record_path: str, out_dir: Path) -> Tuple[Path, int, int]:
     """
     读取 WFDB 记录，按 transform_data.py 原始算法逻辑处理并写出 trans.dat。
     包含 adc_gain 标度、12 导联重排（含 MLII）。
@@ -89,8 +89,10 @@ def process_record_to_trans_dat(record_path: str, out_dir: Path) -> Path:
     out_data.astype(np.int16).tofile(trans_dat)
 
     print(f'✅ {trans_dat} 已生成（int16 格式）')
+    print(f'   Main导联样: {main_idx}')
+    print(f'   Second导联样: {second_idx}')
     print(f'   每导联样本数: {n_samples} × 12 导联')
-    return trans_dat
+    return trans_dat, int(main_idx), int(second_idx)
 
 # ------------------------------------------------
 # 示例运行

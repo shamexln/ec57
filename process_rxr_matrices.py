@@ -95,7 +95,7 @@ def calculate_metrics(S, P):
     SFN = (S[3][0] + S[3][1] + S[3][2] +
            S[4][0] + S[4][1] + S[4][2] +
            S[5][0] + S[5][1] + S[5][2])
-    
+
     # STPp = P33 + P43 + P53 + P63 + P34 + P44 + P54 + P64 + P35 + P45 + P55 + P65
     STPp = (P[3][3] + P[4][3] + P[5][3] + P[6][3] +
             P[3][4] + P[4][4] + P[5][4] + P[6][4] +
@@ -169,13 +169,13 @@ def main():
     # 计算总指标
     final_CSe = total_metrics["CTPs"] / (total_metrics["CTPs"] + total_metrics["CFN"]) if (total_metrics["CTPs"] + total_metrics["CFN"]) > 0 else 0
     final_C_plus_P = total_metrics["CTPp"] / (total_metrics["CTPp"] + total_metrics["CFP"]) if (total_metrics["CTPp"] + total_metrics["CFP"]) > 0 else 0
-    
+
     final_SSe = total_metrics["STPs"] / (total_metrics["STPs"] + total_metrics["SFN"]) if (total_metrics["STPs"] + total_metrics["SFN"]) > 0 else 0
     final_S_plus_P = total_metrics["STPp"] / (total_metrics["STPp"] + total_metrics["SFP"]) if (total_metrics["STPp"] + total_metrics["SFP"]) > 0 else 0
-    
+
     final_LSe = total_metrics["LTPs"] / (total_metrics["LTPs"] + total_metrics["LFN"]) if (total_metrics["LTPs"] + total_metrics["LFN"]) > 0 else 0
     final_L_plus_P = total_metrics["LTPp"] / (total_metrics["LTPp"] + total_metrics["LFP"]) if (total_metrics["LTPp"] + total_metrics["LFP"]) > 0 else 0
-    
+
     final_row = {
         "Record": "TOTAL",
         "CTPs": total_metrics["CTPs"], "CFN": total_metrics["CFN"], "CTPp": total_metrics["CTPp"], "CFP": total_metrics["CFP"],
